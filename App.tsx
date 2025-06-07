@@ -157,41 +157,51 @@ const App: React.FC = () => {
     setIsGeminiLoading(false);
   };
   
-  const OscillatorSection: React.FC<{ oscParams: OscillatorParams; oscIndex: number }> = React.memo(({ oscParams, oscIndex }) => (
-    <div className={`p-3 rounded ${MINIMOOG_KNOB_AREA_BG} shadow-inner`}>
-      <h4 className="text-sm font-semibold text-amber-200 mb-2">Oscillator {oscIndex + 1}</h4>
-      <div className="grid grid-cols-2 gap-3 items-start">
-        <SwitchControl
-            label="Wave"
-            options={WAVEFORM_OPTIONS}
-            currentValue={oscParams.waveform}
-            onChange={(v) => handleParamChange(['oscillators', oscIndex, 'waveform'], v)}
-        />
-        <SwitchControl
-            label="Octave"
-            options={OCTAVE_RANGES}
-            currentValue={oscParams.octave}
-            onChange={(v) => handleParamChange(['oscillators', oscIndex, 'octave'], v)}
-        />
-        <Knob label="Tune" value={oscParams.tune} min={-700} max={700} step={1} onChange={v => handleParamChange(['oscillators', oscIndex, 'tune'], v)} displayFormatter={v => `${(v/100).toFixed(1)}st`}/>
-        <Knob label="Level" value={oscParams.level} min={0} max={1} step={0.01} onChange={v => handleParamChange(['oscillators', oscIndex, 'level'], v)} />
-        <div className="col-span-2">
-            <SwitchControl
-                label="Enabled"
-                options={[{label: 'On', value: 1}, {label: 'Off', value: 0}]}
-                currentValue={oscParams.enabled ? 1: 0}
-                onChange={(v) => handleParamChange(['oscillators', oscIndex, 'enabled'], v === 1)}
-            />
+ const OscillatorSection: React.FC<{ oscParams: OscillatorParams; oscIndex: number }> = React.memo(({ oscParams, oscIndex }) => {
+    
+    // Create stable callbacks for each control to prevent re-renders
+    const handleWaveformChange = useCallback((v: Waveform) => handleParamChange(['oscillators', oscIndex, 'waveform'], v), [oscIndex]);
+    const handleOctaveChange = useCallback((v: number) => handleParamChange(['oscillators', oscIndex, 'octave'], v), [oscIndex]);
+    const handleTuneChange = useCallback((v: number) => handleParamChange(['oscillators', oscIndex, 'tune'], v), [oscIndex]);
+    const handleLevelChange = useCallback((v: number) => handleParamChange(['oscillators', oscIndex, 'level'], v), [oscIndex]);
+    const handleEnabledChange = useCallback((v: number) => handleParamChange(['oscillators', oscIndex, 'enabled'], v === 1), [oscIndex]);
+
+    return (
+        <div className={`p-3 rounded ${MINIMOOG_KNOB_AREA_BG} shadow-inner`}>
+            <h4 className="text-sm font-semibold text-amber-200 mb-2">Oscillator {oscIndex + 1}</h4>
+            <div className="grid grid-cols-2 gap-3 items-start">
+                <SwitchControl
+                    label="Wave"
+                    options={WAVEFORM_OPTIONS}
+                    currentValue={oscParams.waveform}
+                    onChange={handleWaveformChange}
+                />
+                <SwitchControl
+                    label="Octave"
+                    options={OCTAVE_RANGES}
+                    currentValue={oscParams.octave}
+                    onChange={handleOctaveChange}
+                />
+                <Knob label="Tune" value={oscParams.tune} min={-700} max={700} step={1} onChange={handleTuneChange} displayFormatter={v => `${(v/100).toFixed(1)}st`}/>
+                <Knob label="Level" value={oscParams.level} min={0} max={1} step={0.01} onChange={handleLevelChange} />
+                <div className="col-span-2">
+                    <SwitchControl
+                        label="Enabled"
+                        options={[{label: 'On', value: 1}, {label: 'Off', value: 0}]}
+                        currentValue={oscParams.enabled ? 1: 0}
+                        onChange={handleEnabledChange}
+                    />
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  ));
+    );
+});
 
   const memoizedOscillatorSections = useMemo(() => 
     synthParams.oscillators.map((osc, index) => (
       <OscillatorSection key={osc.id} oscParams={osc} oscIndex={index} />
     ))
-  , [synthParams.oscillators, handleParamChange]);
+  , [synthParams.oscillators]);
 
 
   return (
