@@ -1,0 +1,5 @@
+{
+  "name": "Web Minimoog Synth",
+  "description": "A web-based synthesizer inspired by the Moog Minimoog, controllable via USB MIDI keyboard, with a Gemini-powered patch assistant.",
+  "requestFramePermissions": []
+}
