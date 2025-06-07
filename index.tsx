@@ -2,6 +2,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from '@/App'; // Changed from './App'
+import './src/index.css'; // Or './index.css' if you created it in the root
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
