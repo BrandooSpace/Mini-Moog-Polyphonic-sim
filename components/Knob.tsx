@@ -48,15 +48,18 @@ const Knob: React.FC<KnobProps> = ({
     const deltaY = startY - e.clientY;
     let newValue = startValue + (deltaY / sensitivity) * (max - min);
     newValue = Math.max(min, Math.min(max, newValue));
-    
+
     if (step) {
       newValue = Math.round(newValue / step) * step;
     }
-    
-    // Ensure precision for small steps
-    const precision = step.toString().split('.')[1]?.length || 2;
-    newValue = parseFloat(newValue.toFixed(precision));
 
+    // Correctly determine precision from the step value
+    const precision = step.toString().includes('.')
+      ? step.toString().split('.').pop()!.length
+      : 0;
+      
+    // Apply precision to avoid floating point errors
+    newValue = parseFloat(newValue.toFixed(precision));
 
     setCurrentValue(newValue);
     onChange(newValue);
