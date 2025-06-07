@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { MINIMOOG_LABEL_TEXT } from '../constants';
 
@@ -27,23 +26,18 @@ const Knob: React.FC<KnobProps> = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const knobRef = useRef<HTMLDivElement>(null);
-  const [currentValue, setCurrentValue] = useState(value);
   const [startY, setStartY] = useState(0);
   const [startValue, setStartValue] = useState(0);
-
-  useEffect(() => {
-    setCurrentValue(value);
-  }, [value]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     setIsDragging(true);
     setStartY(e.clientY);
-    setStartValue(currentValue);
+    setStartValue(value); // Use prop 'value' as the source of truth
     e.preventDefault(); // Prevent text selection
     document.body.style.cursor = 'ns-resize';
-  }, [currentValue]);
+  }, [value]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => { // Corrected event type to native MouseEvent
     if (!isDragging) return;
     const deltaY = startY - e.clientY;
     let newValue = startValue + (deltaY / sensitivity) * (max - min);
@@ -61,7 +55,6 @@ const Knob: React.FC<KnobProps> = ({
     // Apply precision to avoid floating point errors
     newValue = parseFloat(newValue.toFixed(precision));
 
-    setCurrentValue(newValue);
     onChange(newValue);
   }, [isDragging, startY, startValue, min, max, step, onChange, sensitivity]);
   
@@ -74,15 +67,13 @@ const Knob: React.FC<KnobProps> = ({
 
   useEffect(() => {
     if (isDragging) {
-      // Use window event listeners for mouse move and up to allow dragging outside the knob
-      // Type assertion needed as addEventListener/removeEventListener on window are generic
+      // The `handleMouseMove` now correctly expects a native MouseEvent, so no casting is needed.
       const upHandler = handleMouseUp as unknown as EventListener;
-      const moveHandler = handleMouseMove as unknown as EventListener;
       
-      window.addEventListener('mousemove', moveHandler);
+      window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', upHandler);
       return () => {
-        window.removeEventListener('mousemove', moveHandler);
+        window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', upHandler);
         document.body.style.cursor = 'default';
       };
@@ -90,10 +81,10 @@ const Knob: React.FC<KnobProps> = ({
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
 
-  const percentage = ((currentValue - min) / (max - min)) * 100;
+  const percentage = ((value - min) / (max - min)) * 100;
   const rotation = (percentage / 100) * 270 - 135; // -135 to 135 degrees
 
-  const formattedValue = displayFormatter ? displayFormatter(currentValue) : currentValue.toFixed(step < 0.1 ? 2 : (step < 1 ? 1 : 0));
+  const formattedValue = displayFormatter ? displayFormatter(value) : value.toFixed(step < 0.1 ? 2 : (step < 1 ? 1 : 0));
 
   return (
     <div className="flex flex-col items-center space-y-1 knob-container relative" style={{ touchAction: 'none' }}>
@@ -105,14 +96,14 @@ const Knob: React.FC<KnobProps> = ({
         role="slider"
         aria-valuemin={min}
         aria-valuemax={max}
-        aria-valuenow={currentValue}
+        aria-valuenow={value}
         aria-label={label}
         tabIndex={0} // Make it focusable for accessibility (basic)
         onKeyDown={(e) => { // Basic keyboard control
           if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
-            onChange(Math.min(max, currentValue + step));
+            onChange(Math.min(max, value + step));
           } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
-            onChange(Math.max(min, currentValue - step));
+            onChange(Math.max(min, value - step));
           }
         }}
       >
